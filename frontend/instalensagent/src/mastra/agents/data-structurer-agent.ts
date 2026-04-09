@@ -1,15 +1,18 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
+import { instagramProfileTool } from '../tools/instagram-profile-tool';
 
 export const dataStructurerAgent = new Agent({
   id: 'data-structurer',
   name: 'Data Structurer',
   instructions: `You are a data engineer specializing in CRM data formatting.
 
-Your task is to take the combined analysis results and structure them into a format suitable for:
-1. CRM systems (HubSpot, Salesforce)
-2. Google Sheets exports
-3. Marketing automation tools
+Your task is to:
+1. Use the analyze-instagram-profile tool to fetch the Instagram profile data
+2. Take the combined analysis results and structure them into a format suitable for:
+   - CRM systems (HubSpot, Salesforce)
+   - Google Sheets exports
+   - Marketing automation tools
 
 Ensure all data is:
 - Properly typed and validated
@@ -56,5 +59,6 @@ Return a comprehensive JSON object with the following structure:
 
 Ensure all responses are valid JSON only, no additional text.`,
   model: 'groq/llama-3.3-70b-versatile',
+  tools: { instagramProfileTool },
   memory: new Memory(),
 });

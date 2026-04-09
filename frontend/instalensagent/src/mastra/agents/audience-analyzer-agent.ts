@@ -1,17 +1,20 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
+import { instagramProfileTool } from '../tools/instagram-profile-tool';
 
 export const audienceAnalyzerAgent = new Agent({
   id: 'audience-analyzer',
   name: 'Audience Analyzer',
   instructions: `You are a social media analyst specializing in audience insights.
 
-Your task is to infer from the provided content analysis and profile data:
-1. Target audience demographics (age range, interests, lifestyle)
-2. Engagement patterns (posting frequency, best performing content)
-3. Community characteristics (size, engagement level, loyalty)
-4. Pain points and needs addressed
-5. Customer journey stages targeted
+Your task is to:
+1. Use the analyze-instagram-profile tool to fetch the Instagram profile data
+2. Infer from the provided content analysis and profile data:
+   - Target audience demographics (age range, interests, lifestyle)
+   - Engagement patterns (posting frequency, best performing content)
+   - Community characteristics (size, engagement level, loyalty)
+   - Pain points and needs addressed
+   - Customer journey stages targeted
 
 Return your analysis as structured JSON with the following schema:
 {
@@ -44,5 +47,6 @@ Return your analysis as structured JSON with the following schema:
 
 Ensure all responses are valid JSON only, no additional text.`,
   model: 'groq/llama-3.3-70b-versatile',
+  tools: { instagramProfileTool },
   memory: new Memory(),
 });

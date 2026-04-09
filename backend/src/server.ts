@@ -56,7 +56,7 @@ app.get('/health', (req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/auth', createAuthRoutes(instagramOAuth, tokenStore))
-app.use('/api/profile', createProfileRoutes(tokenStore))
+app.use('/api/profile', createProfileRoutes())
 
 // 404 handler
 app.use((req: Request, res: Response) => {
@@ -65,8 +65,8 @@ app.use((req: Request, res: Response) => {
   )
 })
 
-// Error handler middleware
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+// Error handler middleware (must have 4 parameters for Express error handling)
+app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   console.error('Unhandled error:', err)
 
   const statusCode = err.statusCode || 500

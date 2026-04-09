@@ -43,11 +43,6 @@ export default function Navbar() {
     return () => obs.forEach((o) => o.disconnect());
   }, []);
 
-  const handleLoginClick = () => {
-    // Skip OAuth - go directly to extraction page to use token from backend .env
-    window.location.href = 'http://localhost:3000/extraction';
-  };
-
   return (
     <header
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
@@ -97,12 +92,6 @@ export default function Navbar() {
 
         {/* ── Desktop CTA ── */}
         <div className="hidden md:flex items-center gap-[14px]">
-          <button
-            onClick={handleLoginClick}
-            className="font-ibm-mono text-[10px] text-[#555] tracking-[1.5px] hover:text-[#F5F5F0] transition-colors cursor-pointer bg-transparent border-none"
-          >
-            LOG IN
-          </button>
         </div>
 
         {/* ── Mobile burger ── */}
@@ -155,12 +144,6 @@ export default function Navbar() {
             );
           })}
           <div className="flex flex-col gap-[10px] pt-5">
-            <button 
-              onClick={handleLoginClick}
-              className="font-ibm-mono text-[12px] text-[#555] tracking-[1.5px] cursor-pointer bg-transparent border-none hover:text-[#F5F5F0] transition-colors text-left"
-            >
-              LOG IN
-            </button>
             <a
               href="#"
               className="font-grotesk text-[11px] font-bold text-[#0A0A0A] bg-[#FFD600] tracking-[1.5px] px-[18px] py-[11px] text-center hover:bg-[#F5F5F0] transition-colors"

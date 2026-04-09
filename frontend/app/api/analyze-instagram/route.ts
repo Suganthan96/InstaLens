@@ -1,6 +1,6 @@
 /**
  * POST /api/analyze-instagram
- * Scrapes Instagram profile and analyzes with Mastra AI agents
+ * Proxy to backend Instagram profile analyzer
  * 
  * Request body:
  * {
@@ -11,24 +11,11 @@
  * {
  *   "success": true,
  *   "profile": { ... },
- *   "analysis": {
- *     "profileAnalysis": { ... },
- *     "contentAnalysis": { ... },
- *     "audienceAnalysis": { ... },
- *     "structuredData": { ... }
- *   },
- *   "timestamp": "2026-04-09T...",
- *   "processingTime": 5234
+ *   "analysis": { ... }
  * }
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-
-// Import the scraper from backend
-import { scrapeInstagramProfile } from '@/../../backend/scraper'
-
-// Import Mastra workflow
-import { instagramAnalysisWorkflow } from '@/instalensagent/src/mastra/workflows/instagram-analysis-workflow'
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
@@ -36,7 +23,7 @@ export async function POST(request: NextRequest) {
   try {
     // Validate request
     const body = await request.json()
-    const { username } = body
+    const { username } = body as { username?: string }
 
     if (!username || typeof username !== 'string') {
       return NextResponse.json(
@@ -48,62 +35,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Step 1: Scrape Instagram profile
-    console.log(`[1/2] Scraping Instagram profile: @${username}`)
-    const scraperResult = await scrapeInstagramProfile(username)
+    // Call backend API
+    console.log(`Calling backend API for username: @${username}`)
+    
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'
+    const response = await fetch(`${backendUrl}/api/profile/analyze`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username })
+    })
 
-    if (!scraperResult.success) {
+    if (!response.ok) {
+      const error = await response.json()
       return NextResponse.json(
         {
           success: false,
-          error: `Failed to scrape Instagram profile: ${scraperResult.error}`
+          error: error.message || `Backend returned status ${response.status}`
         },
-        { status: 400 }
+        { status: response.status }
       )
     }
 
-    // Step 2: Analyze with Mastra agents
-    console.log(`[2/2] Running Mastra AI agents on profile data...`)
-
-    // Prepare input for Mastra workflow
-    const agentInput = {
-      profileData: {
-        username: scraperResult.profile.username,
-        fullName: scraperResult.profile.fullName,
-        biography: scraperResult.profile.biography,
-        followers: scraperResult.profile.followers,
-        following: scraperResult.profile.following,
-        profilePicUrl: scraperResult.profile.profilePicUrl,
-        verified: scraperResult.profile.verified,
-        externalUrl: scraperResult.profile.externalUrl
-      },
-      postData: scraperResult.posts.map((post) => ({
-        caption: post.caption,
-        timestamp: post.timestamp,
-        likes: post.likes,
-        comments: post.comments
-      })),
-      engagementMetrics: scraperResult.engagement,
-      hashtags: scraperResult.hashtags.slice(0, 10),
-      mentions: scraperResult.mentions.slice(0, 5)
-    }
-
-    // Execute Mastra workflow
-    const analysisResult = await instagramAnalysisWorkflow.execute(agentInput)
-
+    const analysisResult = await response.json()
     const processingTime = Date.now() - startTime
 
     return NextResponse.json(
       {
         success: true,
-        profile: scraperResult.profile,
-        engagement: scraperResult.engagement,
-        analysis: analysisResult,
+        ...analysisResult,
         timestamp: new Date().toISOString(),
-        processingTime: `${(processingTime / 1000).toFixed(2)}s`,
-        totalPosts: scraperResult.posts.length,
-        topHashtags: scraperResult.hashtags.slice(0, 5),
-        topMentions: scraperResult.mentions.slice(0, 5)
+        processingTime: `${(processingTime / 1000).toFixed(2)}s`
       },
       { status: 200 }
     )
@@ -124,7 +87,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Allow GET requests for health check
-export async function GET(request: NextRequest) {
+export async function GET() {
   return NextResponse.json({
     status: 'ready',
     endpoint: '/api/analyze-instagram',
