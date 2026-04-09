@@ -33,16 +33,19 @@ export default function SubmitPage() {
       return;
     }
 
-    let normalizedUrl = trimmedUrl;
-    if (!normalizedUrl.startsWith('http')) {
-      normalizedUrl = 'https://' + normalizedUrl;
+    // Extract username from URL
+    const match = trimmedUrl.match(/instagram\.com\/([a-zA-Z0-9_.-]+)\/?/);
+    const username = match ? match[1] : '';
+
+    if (!username) {
+      setError('Could not extract Instagram username from URL');
+      return;
     }
 
     setLoading(true);
     
-    // Redirect to backend OAuth with the profile URL to analyze after login
-    const extractUrl = encodeURIComponent(`/extraction?url=${encodeURIComponent(normalizedUrl)}`);
-    window.location.href = `http://localhost:3001/api/auth/instagram?redirect=${extractUrl}`;
+    // Navigate to extraction page with username as query parameter
+    router.push(`/extraction?username=${encodeURIComponent(username)}`);
   };
 
   return (

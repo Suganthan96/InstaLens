@@ -7,57 +7,72 @@ import PixelDivider from '@/components/PixelDivider';
 
 interface ProfileData {
   profile: {
-    id: string;
     username: string;
     name: string;
     biography: string;
-    website: string;
+    followers: number;
+    following: number;
+    postsCount: number;
     profilePictureUrl: string;
+    verified: boolean;
   };
-  media: any[];
+  posts: Array<{
+    id: string;
+    caption: string;
+    type: string;
+    url: string;
+    timestamp: string;
+    likes: number;
+    comments: number;
+  }>;
   extracted: {
-    totalPosts: number;
-    allHashtags: string[];
-    allMentions: string[];
-    avgEngagement: number;
+    hashtags: Array<{ tag: string; count: number }>;
+    mentions: Array<{ mention: string; count: number }>;
+    engagement: {
+      totalLikes: number;
+      totalComments: number;
+      avgLikesPerPost: number;
+      avgCommentsPerPost: number;
+      totalEngagement: number;
+    };
+    contentAnalysis: {
+      totalHashtagsUsed: number;
+      totalMentionsUsed: number;
+      averageHashtagsPerPost: number;
+      averageMentionsPerPost: number;
+    };
   };
 }
 
 export default function ExtractionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const instagramUrl = searchParams.get('url');
-  const userId = searchParams.get('userId');
-  const success = searchParams.get('success');
+  const instagramHandle = searchParams.get('username') || searchParams.get('handle');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [data, setData] = useState<ProfileData | null>(null);
 
   useEffect(() => {
-    // Check if user just authorized via OAuth
-    if (success === 'true' && userId) {
-      // Fetch profile data using the userId and access token stored in backend
-      fetchProfileData(userId);
-    } else if (!success || success === 'false') {
-      if (success === 'false') {
-        setError('OAuth authorization failed. Please try again.');
-      }
-      setLoading(false);
+    if (instagramHandle) {
+      fetchProfileData(instagramHandle);
+    } else {
+      setError('No Instagram username provided. Please go back and submit a profile.');
     }
-  }, [userId, success]);
+  }, [instagramHandle]);
 
-  const fetchProfileData = async (uid: string) => {
+  const fetchProfileData = async (username: string) => {
     try {
       setLoading(true);
+      setError('');
 
-      // Call backend API to analyze the profile
-      const response = await fetch('http://localhost:3001/api/profile/analyze', {
+      // Call backend API to analyze the profile using Apify
+      const response = await fetch('http://localhost:5000/api/profile/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId: uid }),
+        body: JSON.stringify({ username }),
       });
 
       if (!response.ok) {
@@ -66,15 +81,14 @@ export default function ExtractionPage() {
       }
 
       const result = await response.json();
-      if (result.success) {
+      if (result.success && result.data) {
         setData(result.data);
-        setError('');
       } else {
         setError(result.error?.message || 'Failed to fetch profile data');
       }
     } catch (err: any) {
       setError(err.message || 'Failed to analyze profile. Please try again.');
-      console.error(err);
+      console.error('Profile analysis error:', err);
     } finally {
       setLoading(false);
     }
@@ -186,13 +200,22 @@ export default function ExtractionPage() {
           </div>
 
           {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
             <div className="bg-[#0F0F0F] p-6 md:p-8" style={{ border: '2px solid #2D2D2D' }}>
               <p className="font-ibm-mono text-[11px] text-[#FFD600] tracking-[2px] mb-3">
                 TOTAL POSTS
               </p>
               <p className="font-grotesk text-[clamp(28px,6vw,48px)] font-bold text-[#F5F5F0]">
-                {data.extracted.totalPosts}
+                {data.profile.postsCount}
+              </p>
+            </div>
+
+            <div className="bg-[#0F0F0F] p-6 md:p-8" style={{ border: '2px solid #2D2D2D' }}>
+              <p className="font-ibm-mono text-[11px] text-[#FFD600] tracking-[2px] mb-3">
+                FOLLOWERS
+              </p>
+              <p className="font-grotesk text-[clamp(28px,6vw,48px)] font-bold text-[#F5F5F0]">
+                {data.profile.followers.toLocaleString()}
               </p>
             </div>
 
@@ -201,53 +224,55 @@ export default function ExtractionPage() {
                 AVG ENGAGEMENT
               </p>
               <p className="font-grotesk text-[clamp(28px,6vw,48px)] font-bold text-[#F5F5F0]">
-                {data.extracted.avgEngagement}
+                {Math.round(data.extracted.engagement.avgLikesPerPost + data.extracted.engagement.avgCommentsPerPost)}
               </p>
             </div>
 
             <div className="bg-[#0F0F0F] p-6 md:p-8" style={{ border: '2px solid #2D2D2D' }}>
               <p className="font-ibm-mono text-[11px] text-[#FFD600] tracking-[2px] mb-3">
-                HASHTAGS USED
+                AVG HASHTAGS
               </p>
               <p className="font-grotesk text-[clamp(28px,6vw,48px)] font-bold text-[#F5F5F0]">
-                {data.extracted.allHashtags.length}
+                {data.extracted.contentAnalysis.averageHashtagsPerPost}
               </p>
             </div>
           </div>
 
           {/* Hashtags */}
-          {data.extracted.allHashtags.length > 0 && (
+          {data.extracted.hashtags.length > 0 && (
             <div className="bg-[#0F0F0F] p-6 md:p-8 mb-8" style={{ border: '2px solid #2D2D2D' }}>
               <h2 className="font-grotesk text-[20px] font-bold text-[#F5F5F0] tracking-[-0.5px] mb-6">
                 TOP HASHTAGS
               </h2>
-              <div className="flex flex-wrap gap-2">
-                {data.extracted.allHashtags.slice(0, 20).map((tag, idx) => (
-                  <span
+              <div className="flex flex-wrap gap-3">
+                {data.extracted.hashtags.slice(0, 20).map((item, idx) => (
+                  <div
                     key={idx}
-                    className="px-3 py-2 bg-[#1A1A1A] border border-[#FFD600]/20 text-[#F5F5F0] font-ibm-mono text-[11px] tracking-[1px]"
+                    className="px-4 py-2 bg-[#1A1A1A] border border-[#FFD600]/30 rounded-sm text-[#F5F5F0] font-ibm-mono text-[11px] tracking-[1px]"
                   >
-                    #{tag}
-                  </span>
+                    <span className="text-[#FFD600]">#{item.tag}</span>
+                    <span className="text-[#888888] ml-2">({item.count}x)</span>
+                  </div>
                 ))}
               </div>
             </div>
           )}
 
           {/* Mentions */}
-          {data.extracted.allMentions.length > 0 && (
+          {data.extracted.mentions.length > 0 && (
             <div className="bg-[#0F0F0F] p-6 md:p-8" style={{ border: '2px solid #2D2D2D' }}>
               <h2 className="font-grotesk text-[20px] font-bold text-[#F5F5F0] tracking-[-0.5px] mb-6">
-                COLLABORATIONS & MENTIONS
+                TOP COLLABORATIONS & MENTIONS
               </h2>
-              <div className="flex flex-wrap gap-2">
-                {data.extracted.allMentions.slice(0, 15).map((mention, idx) => (
-                  <span
+              <div className="flex flex-wrap gap-3">
+                {data.extracted.mentions.slice(0, 15).map((item, idx) => (
+                  <div
                     key={idx}
-                    className="px-3 py-2 bg-[#1A1A1A] border border-[#FFD600]/20 text-[#F5F5F0] font-ibm-mono text-[11px] tracking-[1px]"
+                    className="px-4 py-2 bg-[#1A1A1A] border border-[#FFD600]/20 text-[#F5F5F0] font-ibm-mono text-[11px] tracking-[1px]"
                   >
-                    @{mention}
-                  </span>
+                    <span className="text-[#FFD600]">@{item.mention}</span>
+                    <span className="text-[#888888] ml-2">({item.count}x)</span>
+                  </div>
                 ))}
               </div>
             </div>

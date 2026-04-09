@@ -44,8 +44,8 @@ export default function Navbar() {
   }, []);
 
   const handleLoginClick = () => {
-    // Redirect to backend OAuth endpoint
-    window.location.href = 'http://localhost:3001/api/auth/instagram';
+    // Skip OAuth - go directly to extraction page to use token from backend .env
+    window.location.href = 'http://localhost:3000/extraction';
   };
 
   return (

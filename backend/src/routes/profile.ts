@@ -1,124 +1,119 @@
 import { Router, Request, Response } from 'express'
-import { InstagramClient } from '../lib/instagram/client'
-import { TokenStore } from '../lib/cache/token-store'
+import { ApifyInstagramClient, extractHashtags, extractMentions, calculateEngagement } from '../lib/apify/client'
 import { successResponse, errorResponse } from '../lib/validation/errors'
 
-export function createProfileRoutes(
-  tokenStore: TokenStore
-): Router {
+export function createProfileRoutes(): Router {
   const router = Router()
+
+  // Initialize Apify client
+  const apifyApiToken = process.env.APIFY_API_TOKEN
+  const apifyActorId = process.env.APIFY_ACTOR_ID
+
+  if (!apifyApiToken || !apifyActorId) {
+    console.error('❌ Apify credentials not configured in .env')
+  }
 
   /**
    * POST /api/profile/analyze
-   * Analyze an Instagram profile using stored access token
+   * Scrape and analyze an Instagram profile using Apify
    */
   router.post('/analyze', async (req: Request, res: Response) => {
     try {
-      const { userId } = req.body
+      const { username } = req.body
 
-      if (!userId) {
+      if (!username) {
         return res.status(400).json(
-          errorResponse(400, 'User ID is required', 'MISSING_USER_ID')
+          errorResponse(400, 'Username is required in request body', 'INVALID_INPUT')
         )
       }
 
-      // Get stored access token
-      const accessToken = tokenStore.getToken(userId)
-
-      if (!accessToken) {
-        return res.status(401).json(
-          errorResponse(401, 'Access token not found. User must authenticate first.', 'TOKEN_NOT_FOUND')
+      if (!apifyApiToken || !apifyActorId) {
+        return res.status(500).json(
+          errorResponse(500, 'Apify credentials not configured', 'APIFY_NOT_CONFIGURED')
         )
       }
 
-      // Initialize Instagram client with stored token
-      const client = new InstagramClient(accessToken)
+      console.log(`📸 Analyzing Instagram profile: @${username}`)
 
-      // Validate token is still active
-      const isValid = await client.validateToken()
-      if (!isValid) {
-        tokenStore.deleteToken(userId)
-        return res.status(401).json(
-          errorResponse(401, 'Access token is invalid or expired', 'TOKEN_INVALID')
+      // Initialize Apify client with proper API token
+      const apifyClient = new ApifyInstagramClient({
+        apiToken: apifyApiToken,
+        actorId: apifyActorId
+      })
+
+      // Scrape the Instagram profile
+      const posts = await apifyClient.scrapeAndWait(username, 12)
+
+      if (!posts || posts.length === 0) {
+        return res.status(404).json(
+          errorResponse(404, 'No posts found for this Instagram profile', 'PROFILE_NOT_FOUND')
         )
       }
 
-      // Get user profile with recent media
-      const profileData = await client.getProfileWithMedia(12)
+      // Extract insights
+      const hashtags = extractHashtags(posts)
+      const mentions = extractMentions(posts)
+      const engagement = calculateEngagement(posts)
 
-      // Parse media for intelligence extraction
-      const parsedMedia = client.parseMediaData(profileData.media)
+      // Get profile info from first post
+      const profileInfo = posts[0]
 
+      // Top hashtags
+      const topHashtags = Array.from(hashtags.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 20)
+        .map(([tag, count]) => ({ tag, count }))
+
+      // Top mentions
+      const topMentions = Array.from(mentions.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 15)
+        .map(([mention, count]) => ({ mention, count }))
+
+      // Build response
       const responseData = {
         profile: {
-          id: profileData.profile.id,
-          username: profileData.profile.username,
-          name: profileData.profile.name,
-          biography: profileData.profile.biography,
-          website: profileData.profile.website,
-          profilePictureUrl: profileData.profile.profile_picture_url
+          username: profileInfo.ownerUsername || username,
+          name: profileInfo.ownerFullName || username,
+          biography: profileInfo.ownerBiography || '',
+          followers: profileInfo.ownerFollowers || 0,
+          following: profileInfo.ownerFollowing || 0,
+          postsCount: profileInfo.ownerPostsCount || 0,
+          profilePictureUrl: profileInfo.ownerProfilePicUrl || '',
+          verified: profileInfo.ownerVerified || false
         },
-        media: parsedMedia,
+        posts: posts.map(post => ({
+          id: post.id,
+          caption: post.caption,
+          type: post.type,
+          url: post.url,
+          timestamp: post.timestamp,
+          likes: post.likesCount,
+          comments: post.commentsCount
+        })),
         extracted: {
-          totalPosts: parsedMedia.length,
-          allHashtags: Array.from(
-            new Set(parsedMedia.flatMap((m) => m.hashtags))
-          ),
-          allMentions: Array.from(
-            new Set(parsedMedia.flatMap((m) => m.mentions))
-          ),
-          avgEngagement: Math.round(
-            parsedMedia.reduce(
-              (sum, m) => sum + (m.engagement.likes + m.engagement.comments),
-              0
-            ) / parsedMedia.length || 0
-          )
+          hashtags: topHashtags,
+          mentions: topMentions,
+          engagement,
+          contentAnalysis: {
+            totalHashtagsUsed: hashtags.size,
+            totalMentionsUsed: mentions.size,
+            averageHashtagsPerPost: Math.round(
+              topHashtags.reduce((sum, h) => sum + h.count, 0) / posts.length
+            ),
+            averageMentionsPerPost: Math.round(
+              topMentions.reduce((sum, m) => sum + m.count, 0) / posts.length
+            )
+          }
         }
       }
 
+      console.log(`✅ Profile analysis complete for @${username}`)
       res.json(successResponse(responseData))
     } catch (error: any) {
-      console.error('Profile analysis failed:', error)
+      console.error('❌ Profile analysis failed:', error.message)
       res.status(500).json(
         errorResponse(500, `Failed to analyze profile: ${error.message}`, 'ANALYSIS_FAILED')
-      )
-    }
-  })
-
-  /**
-   * GET /api/profile/me
-   * Get authenticated user's own profile
-   */
-  router.get('/me', async (req: Request, res: Response) => {
-    try {
-      const userId = req.headers['x-user-id'] as string
-
-      if (!userId) {
-        return res.status(401).json(
-          errorResponse(401, 'User ID is required in X-User-ID header', 'MISSING_USER_ID')
-        )
-      }
-
-      // Get stored access token
-      const accessToken = tokenStore.getToken(userId)
-
-      if (!accessToken) {
-        return res.status(401).json(
-          errorResponse(401, 'Access token not found', 'TOKEN_NOT_FOUND')
-        )
-      }
-
-      // Initialize Instagram client
-      const client = new InstagramClient(accessToken)
-
-      // Get user's own profile
-      const profile = await client.getMe()
-
-      res.json(successResponse(profile))
-    } catch (error: any) {
-      console.error('Failed to get user profile:', error)
-      res.status(500).json(
-        errorResponse(500, `Failed to get profile: ${error.message}`, 'GET_PROFILE_FAILED')
       )
     }
   })
