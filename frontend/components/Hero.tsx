@@ -22,22 +22,21 @@ export default function Hero() {
 
       {/* Headline */}
       <h1 className="font-grotesk text-[clamp(32px,10vw,96px)] font-bold text-[#F5F5F0] tracking-[-1px] leading-none text-center w-full max-w-[1100px]">
-        <GlitchText text="BUILD WITHOUT" speed={45} delay={100} />
+        <GlitchText text="EXTRACT &amp; ANALYZE" speed={45} delay={100} />
         <br />
-        <GlitchText text="LIMITS." speed={45} delay={400} />
+        <GlitchText text="INSTAGRAM INSTANTLY." speed={45} delay={400} />
       </h1>
       <h1 className="font-grotesk text-[clamp(32px,10vw,96px)] font-bold text-[#FFD600] tracking-[-1px] leading-none text-center w-full max-w-[1100px]">
-        <GlitchText text="PIXEL-PERFECT." speed={45} delay={700} />
+        <GlitchText text="AI-POWERED INTELLIGENCE." speed={45} delay={700} />
       </h1>
 
       <div className="h-8 md:h-[32px]" />
 
       {/* Subheading */}
       <p className="font-ibm-mono text-[13px] md:text-[15px] text-[#888888] tracking-[1px] leading-[1.6] text-center w-full max-w-[800px]">
-        THE INDUSTRIAL-GRADE DESIGN SYSTEM FOR BUILDERS WHO DON&apos;T
-        COMPROMISE.
+        AUTOMATED BUSINESS INTELLIGENCE FROM ANY INSTAGRAM PROFILE.
         <br />
-        FROM PIXEL 01 TO PRODUCTION DEPLOY.
+        FROM RAW DATA TO ACTIONABLE INSIGHTS IN SECONDS.
       </p>
 
       <div className="h-10 md:h-[48px]" />
@@ -46,7 +45,7 @@ export default function Hero() {
       <div className="flex flex-col sm:flex-row items-center gap-4 md:gap-[16px] w-full sm:w-auto">
         <button className="flex items-center justify-center w-full sm:w-[220px] h-[56px] bg-[#FFD600] hover:bg-[#e6c200] transition-colors">
           <span className="font-grotesk text-[12px] font-bold text-[#0A0A0A] tracking-[2px]">
-            START BUILDING FREE
+            START EXTRACTING FREE
           </span>
         </button>
         <button className="flex items-center justify-center w-full sm:w-[200px] h-[56px] bg-[#0A0A0A] border-2 border-[#3D3D3D] hover:border-[#888888] transition-colors">
@@ -59,7 +58,7 @@ export default function Hero() {
       <div className="h-6 md:h-[24px]" />
 
       <p className="font-ibm-mono text-[11px] text-[#555555] tracking-[2px] text-center">
-        NO CREDIT CARD // FREE FOREVER PLAN // 10,000+ BUILDERS
+        NO CREDIT CARD // FREE FOREVER PLAN // POWERED BY CLAUDE AI
       </p>
 
       <div className="h-12 md:h-[64px]" />

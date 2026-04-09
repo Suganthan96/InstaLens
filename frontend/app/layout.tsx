@@ -15,9 +15,9 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PixelCraft — Build Without Limits",
+  title: "InstaLens — AI-Powered Instagram Business Intelligence",
   description:
-    "The industrial-grade design system for builders who don't compromise.",
+    "Extract and analyze Instagram business profiles with AI. Get structured business intelligence in seconds.",
 };
 
 export default function RootLayout({

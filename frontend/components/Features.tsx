@@ -51,33 +51,33 @@ export default function Features() {
     >
       <SectionHeader
         label="[01] // FEATURES"
-        title={"EVERYTHING YOU NEED.\nNOTHING YOU DON'T."}
-        subtitle="ENGINEERED FOR SPEED. BUILT FOR SCALE. DESIGNED FOR BUILDERS."
+        title={"INSTANT BUSINESS INTELLIGENCE.\nNO GUESSING."}
+        subtitle="AUTOMATED EXTRACTION. AI-POWERED ANALYSIS. INTEGRATION-READY JSON."
       />
 
       <div className="flex flex-col md:flex-row w-full gap-[2px]">
         <FeatureCard
           iconColor="#FFD600"
-          title={"PIXEL-ACCURATE\nDESIGN SYSTEM"}
-          description="EVERY COMPONENT BUILT TO A 4PX GRID. NO EXCEPTIONS. NO COMPROMISE."
-          tag="CORE"
+          title={"AUTOMATED\nPROFILE EXTRACTION"}
+          description="HEADLESS BROWSER HARVESTS ALL PUBLIC INSTAGRAM DATA. BIO, POSTS, ENGAGEMENT, HASHTAGS, AND MORE."
+          tag="SCRAPING"
           tagColor="#FFD600"
           borderColor="#FFD600"
         />
         <FeatureCard
           iconColor="#FF6B35"
-          title={"ZERO-DEPENDENCY\nCOMPONENTS"}
-          description="PURE VANILLA. NO BLOAT. SHIP EXACTLY WHAT YOUR USERS NEED, NOTHING MORE."
-          tag="VANILLA"
+          title={"AI-POWERED\nANALYSIS"}
+          description="CLAUDE TRANSFORMS RAW DATA INTO STRUCTURED BUSINESS INTELLIGENCE. CATEGORY, SERVICES, AUDIENCE SIGNALS."
+          tag="CLAUDE API"
           tagColor="#FF6B35"
           bgColor="#0F0F0F"
           borderColor="#FF6B35"
         />
         <FeatureCard
           iconColor="#F5F5F0"
-          title={"DARK MODE\nFIRST."}
-          description="BUILT FOR THE TERMINAL GENERATION. EVERY COLOR CALIBRATED FOR LOW-LIGHT PRECISION."
-          tag="DARK"
+          title={"CRM-READY\nINTEGRATIONS."}
+          description="PUSH LEADS TO HUBSPOT, SALESFORCE, OR ZAPIER. EXPORT JSON, CSV, OR TRIGGER WEBHOOKS."
+          tag="INTEGRATIONS"
           tagColor="#888888"
           borderColor="#555555"
         />
