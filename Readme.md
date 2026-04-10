@@ -1,4 +1,4 @@
-# InstaLens Technical 
+# InstaLens 
 InstaLens is a multi-service Instagram intelligence platform with three deployable units:
 
 - frontend: Next.js 15 App Router application (UI + API proxy/integration routes)
